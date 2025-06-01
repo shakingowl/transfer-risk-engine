@@ -1,14 +1,18 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).send({ message: 'Only POST requests allowed' 
-});
+    return res.status(405).send({ message: 'Only POST requests allowed' });
   }
 
   const { from, to, pair, amount, bank } = req.body;
 
-  const prompt = `You are an expert in international currency transfers. 
-Please assess the potential risk of a money transfer based on the 
-following:
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: 'OpenAI API key is missing' });
+  }
+
+  const prompt = `You are an expert in international currency transfers.
+Please assess the potential risk of a money transfer based on the following:
 
 From Country: ${from}
 To Country: ${to}
@@ -20,18 +24,16 @@ Give a risk level (Low / Medium / High), explain the key reasons, and
 suggest any actions to reduce risk.`;
 
   try {
-    const openaiRes = await 
-fetch('https://api.openai.com/v1/chat/completions', {
+    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: 'gpt-4',
         messages: [
-          { role: 'system', content: 'You are a helpful AI that assesses 
-international transfer risk.' },
+          { role: 'system', content: 'You are a helpful AI that assesses international transfer risk.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.3,
@@ -40,10 +42,16 @@ international transfer risk.' },
     });
 
     const data = await openaiRes.json();
+
+    if (!data.choices || !data.choices[0]) {
+      throw new Error('No response from OpenAI');
+    }
+
     res.status(200).json({ result: data.choices[0].message.content });
   } catch (error) {
-    console.error(error);
+    console.error('API Error:', error);
     res.status(500).json({ error: 'Something went wrong' });
   }
 }
+
 
