@@ -1,4 +1,4 @@
-const fetch = require('node-fetch'); // or use dynamic import for v3+
+const fetch = require('node-fetch');
 
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
