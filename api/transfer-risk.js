@@ -1,27 +1,23 @@
-export default async function handler(req, res) {
+const handler = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).send({ message: 'Only POST requests allowed' });
   }
 
   const { from, to, pair, amount, bank } = req.body;
-
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
     return res.status(500).json({ error: 'OpenAI API key is missing' });
   }
 
-  const prompt = `You are an expert in international currency transfers.
-Please assess the potential risk of a money transfer based on the following:
-
+  const prompt = `You are an expert in international currency transfers...
 From Country: ${from}
 To Country: ${to}
 Currency Pair: ${pair}
 Amount: ${amount}
 Bank or Transfer Provider: ${bank || 'Not specified'}
 
-Give a risk level (Low / Medium / High), explain the key reasons, and 
-suggest any actions to reduce risk.`;
+Give a risk level (Low / Medium / High), explain the key reasons, and suggest actions.`;
 
   try {
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -33,7 +29,7 @@ suggest any actions to reduce risk.`;
       body: JSON.stringify({
         model: 'gpt-4',
         messages: [
-          { role: 'system', content: 'You are a helpful AI that assesses international transfer risk.' },
+          { role: 'system', content: 'You are a helpful AI...' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.3,
@@ -52,6 +48,9 @@ suggest any actions to reduce risk.`;
     console.error('API Error:', error);
     res.status(500).json({ error: 'Something went wrong' });
   }
-}
+};
+
+module.exports = handler;
+
 
 
